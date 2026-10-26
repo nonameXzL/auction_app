@@ -9,7 +9,7 @@ from kivy.uix.spinner import Spinner
 from kivy.uix.scrollview import ScrollView
 import requests
 
-API_URL = "http://127.0.0.1:8000/api"
+API_URL = "https://auction-app-ukvl.onrender.com/api"
 
 
 # Уведомления (сообщения об ошибках и успехе)
