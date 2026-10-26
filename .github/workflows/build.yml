@@ -18,11 +18,16 @@ jobs:
 
       - name: Install 32-bit dependencies for aidl
         run: |
-          # Включаем поддержку 32-битных библиотек
           sudo dpkg --add-architecture i386
           sudo apt-get update
-          # Устанавливаем базовые пакеты + 32-битные библиотеки для aidl
-          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev lib32z1 lib32ncurses5 lib32stdc++6
+          # Заменили lib32ncurses5 на lib32ncurses6
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev lib32z1 lib32ncurses6 lib32stdc++6
+          
+      - name: Fix libtinfo5
+        run: |
+          # На всякий случай скачиваем и ставим libtinfo5, так как Android SDK требует именно её
+          wget http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.2-0ubuntu2_amd64.deb
+          sudo dpkg -i libtinfo5_6.2-0ubuntu2_amd64.deb || true
 
       - name: Install Buildozer
         run: |
