@@ -1,74 +1,64 @@
-name: Build APK
+name: "Build APK"
 
 on:
   push:
-    branches: [ main, master ]
-    tags: [ 'v' ]
-  workflow_dispatch:
+    branches: ["main", "master"]
+  workflow_dispatch: {}
 
 permissions:
-  contents: write
+  contents: "write"
 
 jobs:
   build:
-    name: Build Debug APK
-    runs-on: ubuntu-22.04
-
-    steps:
-      
-name: Checkout repository
-      uses: actions/checkout@v4
-
-      
-name: Set up Python 3.10
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-      
-name: Install System Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential git zip unzip openjdk-17-jdk python3-pip python3-dev autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev ccache lld patch
-
-      
-name: Install Buildozer and Cython
-      run: |
-        python -m pip install --upgrade pip setuptools wheel
-        pip install buildozer "cython==0.29.36" virtualenv
-
-      
-name: Prepare Kivy Entry Point (main.py)
-      run: |
-        if [ ! -f main.py ] && [ -f client.py ]; then
-          cp client.py main.py
-          echo "Created main.py from client.py"
-        fi
-
-      
-name: Build Debug APK with Buildozer
-      env:
-        APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
-        BUILDOZER_WARN_ON_ROOT: "0"
-      run: |(yes || true) | buildozer -v android debug
-
-      
-name: Upload APK to GitHub Actions Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: auction-debug-apk
-        path: bin/
-.apk
-          if-no-files-found: error
-
-      
-name: Attach APK to GitHub Release
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: debug-latest
-        name: "Auction App — Debug APK"
-        body: "Автоматическая тестовая сборка APK из коммита ${{ github.sha }}."
-        files: bin/*.apk
-        prerelease: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    name: "Build Debug APK"
+    runs-on: "ubuntu-22.04"
+    steps: [
+      {
+        name: "Checkout repository",
+        uses: "actions/checkout@v4"
+      },
+      {
+        name: "Set up Python 3.10",
+        uses: "actions/setup-python@v5",
+        with: {
+          python-version: "3.10"
+        }
+      },
+      {
+        name: "Install System Dependencies",
+        run: "sudo apt-get update && sudo apt-get install -y build-essential git zip unzip openjdk-17-jdk python3-pip python3-dev autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev ccache lld patch"
+      },
+      {
+        name: "Install Buildozer and Cython",
+        run: "python -m pip install --upgrade pip setuptools wheel && pip install buildozer cython==0.29.36 virtualenv"
+      },
+      {
+        name: "Prepare Entry Point and Build APK",
+        env: {
+          APP_ANDROID_ACCEPT_SDK_LICENSE: "1",
+          BUILDOZER_WARN_ON_ROOT: "0"
+        },
+        run: "cp client.py main.py && (yes || true) | buildozer -v android debug && cp bin/$(ls bin | head -n 1) auction-debug.apk"
+      },
+      {
+        name: "Upload APK to GitHub Actions Artifacts",
+        uses: "actions/upload-artifact@v4",
+        with: {
+          name: "auction-debug-apk",
+          path: "auction-debug.apk"
+        }
+      },
+      {
+        name: "Attach APK to GitHub Release",
+        uses: "softprops/action-gh-release@v2",
+        with: {
+          tag_name: "debug-latest",
+          name: "Auction App Debug APK",
+          files: "auction-debug.apk",
+          prerelease: true
+        },
+        env: {
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        }
+      }
+    ]
