@@ -1,26 +1,38 @@
 name: Build APK
-
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 jobs:
-  build-android:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build APK in Docker Container
-        run: |
-          # Запускаем официальный Docker-образ Kivy/Buildozer
-          # Он уже содержит все нужные старые библиотеки (включая aidl)
-          docker run --rm -v "$PWD":/home/user/hostcwd kivy/buildozer:latest buildozer -v android debug
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-      - name: Fix file permissions
+      - name: Install System Dependencies
         run: |
-          # Возвращаем права на файлы, чтобы GitHub смог их забрать
-          sudo chown -R $USER:$USER .
+          # Включаем 32-битную архитектуру
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev libc6:i386 libncurses5:i386 libstdc++6:i386 lib32z1
+          
+          # Скачиваем и ставим библиотеку libtinfo5 (без нее падает aidl)
+          wget http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.2-0ubuntu2_amd64.deb
+          sudo dpkg -i libtinfo5_6.2-0ubuntu2_amd64.deb || true
+
+      - name: Install Buildozer
+        run: |
+          python -m pip install --upgrade pip
+          pip install buildozer cython virtualenv
+
+      - name: Build APK
+        run: |
+          # ОЧЕНЬ ВАЖНО: удаляем старый битый Android SDK из кэша
+          rm -rf ~/.buildozer
+          buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
