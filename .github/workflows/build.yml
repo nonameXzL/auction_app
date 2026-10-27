@@ -11,37 +11,20 @@ permissions:
 jobs:
   build:
     name: "Build Debug APK"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install System Dependencies
+      - name: Build APK inside Kivy Docker container
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential git zip unzip openjdk-17-jdk python3-pip python3-dev autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev ccache lld patch
-            
-          wget http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.2-0ubuntu2_amd64.deb
-          sudo dpkg -i libtinfo5_6.2-0ubuntu2_amd64.deb || true
+          # Запускаем сборку в официальном контейнере Kivy (внутри него Ubuntu 20.04 и все 32-битные библиотеки)
+          docker run --rm -v "$PWD":/home/user/hostcwd kivy/buildozer:latest buildozer -v android debug
 
-      - name: Install Buildozer and Cython
+      - name: Fix file permissions
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install buildozer cython==0.29.36 virtualenv
-
-      - name: Prepare Entry Point and Build APK
-        env:
-          APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
-          BUILDOZER_WARN_ON_ROOT: "0"
-        run: |
-          cp client.py main.py
-          # Убрали (yes | ...), оставили только запуск Buildozer
-          buildozer -v android debug
+          # Возвращаем права файлам, чтобы GitHub смог их скачать
+          sudo chown -R $USER:$USER .
 
       - name: Upload APK to GitHub Actions Artifacts
         uses: actions/upload-artifact@v4
