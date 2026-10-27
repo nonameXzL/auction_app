@@ -21,18 +21,13 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install System Dependencies & 32-bit Fix
+      - name: Install System Dependencies
         run: |
-          # Включаем 32-битную архитектуру
-          sudo dpkg --add-architecture i386
           sudo apt-get update
-          
-          # Ставим базовые пакеты и 32-битные библиотеки
-          sudo apt-get install -y build-essential git zip unzip openjdk-17-jdk python3-pip python3-dev autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev ccache lld patch libc6:i386 libncurses5:i386 libstdc++6:i386 lib32z1 libbz2-1.0:i386
-          
-          # Скачиваем и принудительно ставим 32-битную libtinfo5 (без нее падает aidl)
-          wget http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.2-0ubuntu2_i386.deb
-          sudo dpkg -i --force-all libtinfo5_6.2-0ubuntu2_i386.deb || true
+          sudo apt-get install -y build-essential git zip unzip openjdk-17-jdk python3-pip python3-dev autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev ccache lld patch
+            
+          wget http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.2-0ubuntu2_amd64.deb
+          sudo dpkg -i libtinfo5_6.2-0ubuntu2_amd64.deb || true
 
       - name: Install Buildozer and Cython
         run: |
@@ -45,8 +40,7 @@ jobs:
           BUILDOZER_WARN_ON_ROOT: "0"
         run: |
           cp client.py main.py
-          # Удаляем старый сломанный SDK из кэша, чтобы скачался заново
-          rm -rf ~/.buildozer
+          # Убрали (yes | ...), оставили только запуск Buildozer
           buildozer -v android debug
 
       - name: Upload APK to GitHub Actions Artifacts
